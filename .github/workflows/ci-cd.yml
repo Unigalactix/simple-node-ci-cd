@@ -82,7 +82,7 @@ jobs:
         tags: ${{ secrets.ACR_LOGIN_SERVER }}/${{ env.REPO_LOWER }}:latest,${{ secrets.ACR_LOGIN_SERVER }}/${{ env.REPO_LOWER }}:${{ github.sha }}
     
     - name: Run Trivy Vulnerability Scanner
-      uses: aquasecurity/trivy-action@master
+      uses: aquasecurity/trivy-action@0.28.0
       with:
         image-ref: '${{ secrets.ACR_LOGIN_SERVER }}/${{ env.REPO_LOWER }}:latest'
         format: 'table'
