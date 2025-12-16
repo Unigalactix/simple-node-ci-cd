@@ -91,6 +91,8 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: [build, security-scan]
+    permissions:
+      contents: read
     environment: Production
     steps:
     - uses: actions/checkout@v4
