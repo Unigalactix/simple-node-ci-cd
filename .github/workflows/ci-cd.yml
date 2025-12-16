@@ -79,6 +79,7 @@ jobs:
         context: .
         push: false
         tags: ghcr.io/${{ github.repository }}:latest
+        load: true
     
     - name: Run Trivy Vulnerability Scanner
       uses: aquasecurity/trivy-action@master
@@ -89,9 +90,6 @@ jobs:
         ignore-unfixed: true
         vuln-type: 'os,library'
         severity: 'CRITICAL,HIGH'
-      env:
-        TRIVY_USERNAME: ${{ github.actor }}
-        TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
 
   # --- JOB 4: DEPLOYMENT (Conditional) ---
   # Generates if deploy target is 'azure-webapp'
