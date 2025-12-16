@@ -11,6 +11,8 @@ jobs:
   # JOB 1: BUILD & TEST
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
     - uses: actions/checkout@v4
 
@@ -90,6 +92,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build, security-scan, docker-build]
     environment: Production
+    permissions:
+      contents: read
     steps:
     - uses: actions/checkout@v4
     - name: Deploy to Azure Web App
