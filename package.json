@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node app.js",
+    "build": "echo 'No build step required for this Node.js app'",
     "test": "jest",
     "lint": "eslint ."
   },
