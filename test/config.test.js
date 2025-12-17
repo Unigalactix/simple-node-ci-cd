@@ -14,8 +14,17 @@ describe('Configuration Manager', () => {
   });
 
   afterEach(() => {
-    // Restore original environment
-    process.env = originalEnv;
+    // Restore original environment properly
+    // Remove any keys that were added
+    Object.keys(process.env).forEach(key => {
+      if (!(key in originalEnv)) {
+        delete process.env[key];
+      }
+    });
+    // Restore original values
+    Object.keys(originalEnv).forEach(key => {
+      process.env[key] = originalEnv[key];
+    });
   });
 
   describe('Configuration Validation', () => {
@@ -130,8 +139,10 @@ describe('Configuration Manager', () => {
     });
 
     test('should detect drift when NODE_ENV changes', () => {
+      // Set up environment to have a known state
+      process.env.NODE_ENV = 'development';
+      
       const config = new ConfigurationManager();
-      config.initialConfig.NODE_ENV = 'development';
       
       // Simulate environment change
       process.env.NODE_ENV = 'production';
@@ -252,7 +263,7 @@ describe('Configuration Manager', () => {
       const config = new ConfigurationManager();
       const initialConfig = config.getConfig();
       
-      expect(initialConfig.PORT).toBe('4000');
+      expect(initialConfig.PORT).toBe(4000);
       expect(initialConfig.NODE_ENV).toBe('production');
     });
 

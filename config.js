@@ -6,7 +6,7 @@
 class ConfigurationManager {
   constructor() {
     this.config = {
-      PORT: process.env.PORT || 3000,
+      PORT: parseInt(process.env.PORT, 10) || 3000,
       NODE_ENV: process.env.NODE_ENV || 'development',
       HOST: process.env.HOST || 'localhost',
     };
@@ -25,7 +25,7 @@ class ConfigurationManager {
     this.configErrors = [];
     
     // Validate PORT
-    const port = parseInt(this.config.PORT, 10);
+    const port = this.config.PORT;
     if (isNaN(port) || port < 1 || port > 65535) {
       this.configErrors.push({
         variable: 'PORT',
@@ -67,7 +67,7 @@ class ConfigurationManager {
     const changes = [];
     
     Object.keys(this.initialConfig).forEach((key) => {
-      const currentValue = process.env[key] || this.config[key];
+      const currentValue = process.env[key] ?? this.config[key];
       const initialValue = this.initialConfig[key];
       
       if (String(currentValue) !== String(initialValue)) {
