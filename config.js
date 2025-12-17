@@ -140,7 +140,8 @@ class ConfigurationManager {
   }
 }
 
-// Export singleton instance
+// Export both the class (for testing) and singleton instance (for use in app)
 const configManager = new ConfigurationManager();
 
 module.exports = configManager;
+module.exports.ConfigurationManager = ConfigurationManager;
