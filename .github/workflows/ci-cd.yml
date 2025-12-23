@@ -13,6 +13,8 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
@@ -28,6 +30,18 @@ jobs:
       - name: Lint Code
         run: npm run lint
 
+      - name: Generate Deployment Metadata
+        run: |
+          echo "{
+            \"status\": \"success\",
+            \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",
+            \"environment\": \"production\",
+            \"build_number\": \"${{ github.run_number }}\",
+            \"commit_sha\": \"${{ github.sha }}\",
+            \"branch\": \"${{ github.ref_name }}\"
+          }" > deployment-status.json
+          cat deployment-status.json
+
       - name: Build Docker Image
         run: docker build -t nafisah25/simple-node-app .
 
@@ -36,3 +50,15 @@ jobs:
 
       - name: Push Image
         run: docker push nafisah25/simple-node-app
+
+      - name: Update Deployment Status on Failure
+        if: failure()
+        run: |
+          echo "{
+            \"status\": \"failed\",
+            \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",
+            \"environment\": \"production\",
+            \"build_number\": \"${{ github.run_number }}\",
+            \"commit_sha\": \"${{ github.sha }}\",
+            \"branch\": \"${{ github.ref_name }}\"
+          }" > deployment-status.json
