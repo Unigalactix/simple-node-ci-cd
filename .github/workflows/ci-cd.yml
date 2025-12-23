@@ -1,46 +1,75 @@
-name: CI/CD Pipeline
+name: CI Pipeline - Unigalactix/simple-node-ci-cd
 
 on:
   push:
-    branches: [main]
+    branches: ["main"]
   pull_request:
-    branches: [main]
+    branches: ["main"]
+
+env:
+  CI: true
 
 jobs:
+  # JOB 1: BUILD & TEST
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
+      - uses: actions/checkout@v4
 
+      # Setup Logic based on Language Detected
+      # Language: node
       - name: Set up Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '18'
 
       - name: Install Dependencies
         run: npm install
 
-      - name: Run Tests
+      # Commands injected from Repo Analysis (package.json) or Defaults
+      - name: Build
+        run: npm run build || echo "No build script defined, skipping..."
+
+      - name: Test
         run: npm test
 
-      - name: Lint Code
+      - name: Lint
         run: npm run lint
 
-      - name: Generate Deployment Metadata
-        run: |
-          echo "{
-            \"status\": \"success\",
-            \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",
-            \"environment\": \"production\",
-            \"build_number\": \"${{ github.run_number }}\",
-            \"commit_sha\": \"${{ github.sha }}\",
-            \"branch\": \"${{ github.ref_name }}\"
-          }" > deployment-status.json
-          cat deployment-status.json
+  # JOB 2: SECURITY SCANS
+  security-scan:
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+
+  # JOB 3: CONTAINERIZATION (Conditional)
+  # Generates if deploy target is 'docker' OR 'azure-webapp'
+  docker-build:
+    runs-on: ubuntu-latest
+    needs: [build, security-scan]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compute lowercase repo name
+        run: echo "REPO_LOWER=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
 
       - name: Check Azure Configuration
         id: azure_check
@@ -54,34 +83,49 @@ jobs:
             echo "Azure deployment skipped - secrets not configured"
           fi
 
-      - name: Build Docker Image
+      - name: Log in to Azure Container Registry
         if: steps.azure_check.outputs.enabled == 'true'
-        run: docker build -t ${{ secrets.ACR_LOGIN_SERVER }}/simple-node-app:${{ github.sha }} .
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.ACR_LOGIN_SERVER }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
 
-      - name: Login to Azure Container Registry
+      - name: Build and push
         if: steps.azure_check.outputs.enabled == 'true'
-        run: echo "${{ secrets.ACR_PASSWORD }}" | docker login ${{ secrets.ACR_LOGIN_SERVER }} -u ${{ secrets.ACR_USERNAME }} --password-stdin
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ secrets.ACR_LOGIN_SERVER }}/${{ env.REPO_LOWER }}:latest,${{ secrets.ACR_LOGIN_SERVER }}/${{ env.REPO_LOWER }}:${{ github.sha }}
 
-      - name: Push Image to ACR
-        if: steps.azure_check.outputs.enabled == 'true'
-        run: docker push ${{ secrets.ACR_LOGIN_SERVER }}/simple-node-app:${{ github.sha }}
+  # JOB 4: DEPLOYMENT (Conditional)
+  # Generates if deploy target is 'azure-webapp'
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [docker-build]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment: Production
+    steps:
+      - uses: actions/checkout@v4
 
-      - name: Deploy to Azure App Service
+      - name: Check Azure Configuration
+        id: azure_check
+        env:
+          AZURE_WEBAPP_PUBLISH_PROFILE: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+        run: |
+          if [ -n "$AZURE_WEBAPP_PUBLISH_PROFILE" ]; then
+            echo "enabled=true" >> $GITHUB_OUTPUT
+          else
+            echo "enabled=false" >> $GITHUB_OUTPUT
+            echo "Azure Web App deployment skipped - secrets not configured"
+          fi
+
+      - name: Deploy to Azure Web App
         if: steps.azure_check.outputs.enabled == 'true'
         uses: azure/webapps-deploy@v2
         with:
-          app-name: ${{ secrets.AZURE_WEBAPP_APP_NAME }}
+          app-name: 'democicd111'
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          images: ${{ secrets.ACR_LOGIN_SERVER }}/simple-node-app:${{ github.sha }}
-
-      - name: Update Deployment Status on Failure
-        if: failure()
-        run: |
-          echo "{
-            \"status\": \"failed\",
-            \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",
-            \"environment\": \"production\",
-            \"build_number\": \"${{ github.run_number }}\",
-            \"commit_sha\": \"${{ github.sha }}\",
-            \"branch\": \"${{ github.ref_name }}\"
-          }" > deployment-status.json
+          package: .
+          slot-name: production
