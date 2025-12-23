@@ -13,6 +13,8 @@ jobs:
   # JOB 1: BUILD & TEST
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
@@ -106,6 +108,8 @@ jobs:
     needs: [docker-build]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     environment: Production
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
