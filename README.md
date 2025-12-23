@@ -22,7 +22,8 @@ This project demonstrates a deployment-ready Node.js application with a comprehe
 
 * Node.js 18+ & npm
 * Docker (for containerization)
-* Docker Hub account (for CI/CD)
+* Azure Container Registry (for CI/CD)
+* Azure App Service (for deployment)
 * Git (for version control)
 
 ## 📦 Installation
@@ -107,7 +108,7 @@ npm run lint
 ## 🐳 Build Docker Image
 
 ```bash
-docker build -t your-dockerhub-username/simple-node-ci-cd .
+docker build -t <your-acr-name>.azurecr.io/simple-node-ci-cd .
 ```
 
 ## 🧬 CI/CD Pipeline
@@ -120,7 +121,8 @@ The pipeline is configured in `.github/workflows/ci-cd.yml`. It automatically:
 * Performs code linting
 * Generates deployment metadata (timestamp, status, build info)
 * Builds Docker image
-* Pushes to Docker Hub
+* Pushes to Azure Container Registry (ACR)
+* Deploys to Azure App Service
 * Tracks deployment status (success/failure)
 
 ### Automated Deployment Tracking
@@ -137,8 +139,11 @@ The CI/CD pipeline automatically generates a `deployment-status.json` file conta
 
 Set these in your GitHub repository settings under `Settings > Secrets and variables > Actions`:
 
-* `DOCKER_USERNAME` - Your Docker Hub username
-* `DOCKER_PASSWORD` - Your Docker Hub password or access token
+* `AZURE_REGISTRY_NAME` - Your Azure Container Registry name (without .azurecr.io)
+* `AZURE_REGISTRY_USERNAME` - Your Azure Container Registry username
+* `AZURE_REGISTRY_PASSWORD` - Your Azure Container Registry password
+* `AZURE_APP_NAME` - Your Azure App Service name
+* `AZURE_WEBAPP_PUBLISH_PROFILE` - Your Azure App Service publish profile
 
 ## 📁 Project Structure
 
