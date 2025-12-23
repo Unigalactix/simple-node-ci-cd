@@ -45,9 +45,9 @@ jobs:
       - name: Check Azure Configuration
         id: azure_check
         env:
-          AZURE_REGISTRY_NAME: ${{ secrets.AZURE_REGISTRY_NAME }}
+          ACR_LOGIN_SERVER: ${{ secrets.ACR_LOGIN_SERVER }}
         run: |
-          if [ -n "$AZURE_REGISTRY_NAME" ]; then
+          if [ -n "$ACR_LOGIN_SERVER" ]; then
             echo "enabled=true" >> $GITHUB_OUTPUT
           else
             echo "enabled=false" >> $GITHUB_OUTPUT
@@ -56,23 +56,23 @@ jobs:
 
       - name: Build Docker Image
         if: steps.azure_check.outputs.enabled == 'true'
-        run: docker build -t ${{ secrets.AZURE_REGISTRY_NAME }}.azurecr.io/simple-node-app:${{ github.sha }} .
+        run: docker build -t ${{ secrets.ACR_LOGIN_SERVER }}/simple-node-app:${{ github.sha }} .
 
       - name: Login to Azure Container Registry
         if: steps.azure_check.outputs.enabled == 'true'
-        run: echo "${{ secrets.AZURE_REGISTRY_PASSWORD }}" | docker login ${{ secrets.AZURE_REGISTRY_NAME }}.azurecr.io -u ${{ secrets.AZURE_REGISTRY_USERNAME }} --password-stdin
+        run: echo "${{ secrets.ACR_PASSWORD }}" | docker login ${{ secrets.ACR_LOGIN_SERVER }} -u ${{ secrets.ACR_USERNAME }} --password-stdin
 
       - name: Push Image to ACR
         if: steps.azure_check.outputs.enabled == 'true'
-        run: docker push ${{ secrets.AZURE_REGISTRY_NAME }}.azurecr.io/simple-node-app:${{ github.sha }}
+        run: docker push ${{ secrets.ACR_LOGIN_SERVER }}/simple-node-app:${{ github.sha }}
 
       - name: Deploy to Azure App Service
         if: steps.azure_check.outputs.enabled == 'true'
         uses: azure/webapps-deploy@v2
         with:
-          app-name: ${{ secrets.AZURE_APP_NAME }}
+          app-name: ${{ secrets.AZURE_WEBAPP_APP_NAME }}
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          images: ${{ secrets.AZURE_REGISTRY_NAME }}.azurecr.io/simple-node-app:${{ github.sha }}
+          images: ${{ secrets.ACR_LOGIN_SERVER }}/simple-node-app:${{ github.sha }}
 
       - name: Update Deployment Status on Failure
         if: failure()
