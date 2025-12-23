@@ -22,6 +22,7 @@
     "supertest": "^7.1.0"
   },
   "dependencies": {
-    "eslint-plugin-react": "^7.37.5"
+    "eslint-plugin-react": "^7.37.5",
+    "express": "^4.22.1"
   }
 }
