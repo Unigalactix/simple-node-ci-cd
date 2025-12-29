@@ -129,7 +129,7 @@ jobs:
         if: steps.azure_check.outputs.enabled == 'true'
         uses: azure/webapps-deploy@v2
         with:
-          app-name: 'democicd111'
+          app-name: 'simple-node-ci-cd'
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: .
           slot-name: production
