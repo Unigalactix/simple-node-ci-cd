@@ -101,6 +101,26 @@ jobs:
           push: true
           tags: ${{ secrets.ACR_LOGIN_SERVER }}/${{ env.REPO_LOWER }}:latest,${{ secrets.ACR_LOGIN_SERVER }}/${{ env.REPO_LOWER }}:${{ github.sha }}
 
+      - name: Generate deployment status
+        if: steps.azure_check.outputs.enabled == 'true'
+        run: |
+          echo '{
+            "status": "success",
+            "timestamp": "'$(date -u +"%Y-%m-%dT%H:%M:%SZ")'",
+            "environment": "production",
+            "build_number": "'$GITHUB_RUN_NUMBER'",
+            "commit_sha": "'$GITHUB_SHA'",
+            "branch": "'$GITHUB_REF_NAME'",
+            "docker_image": "${{ secrets.ACR_LOGIN_SERVER }}/${{ env.REPO_LOWER }}:${{ github.sha }}"
+          }' > deployment-status.json
+
+      - name: Upload deployment status artifact
+        if: steps.azure_check.outputs.enabled == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-status
+          path: deployment-status.json
+
   # JOB 4: DEPLOYMENT (Conditional)
   # Generates if deploy target is 'azure-webapp'
   deploy:
@@ -124,6 +144,12 @@ jobs:
             echo "enabled=false" >> $GITHUB_OUTPUT
             echo "Azure Web App deployment skipped - secrets not configured"
           fi
+
+      - name: Download deployment status artifact
+        if: steps.azure_check.outputs.enabled == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: deployment-status
 
       - name: Deploy to Azure Web App
         if: steps.azure_check.outputs.enabled == 'true'
