@@ -340,6 +340,30 @@ app.get('/', (req, res) => {
                         <div class="info-label">Last Deployment</div>
                         <div class="info-value">\${new Date(deploy.timestamp).toLocaleString()}</div>
                     </div>
+                    \${deploy.build_number ? \`
+                    <div class="info-item">
+                        <div class="info-label">Build Number</div>
+                        <div class="info-value">\${deploy.build_number}</div>
+                    </div>
+                    \` : ''}
+                    \${deploy.commit_sha ? \`
+                    <div class="info-item">
+                        <div class="info-label">Commit SHA</div>
+                        <div class="info-value">\${deploy.commit_sha.substring(0, 7)}</div>
+                    </div>
+                    \` : ''}
+                    \${deploy.branch ? \`
+                    <div class="info-item">
+                        <div class="info-label">Branch</div>
+                        <div class="info-value">\${deploy.branch}</div>
+                    </div>
+                    \` : ''}
+                    \${deploy.docker_image ? \`
+                    <div class="info-item">
+                        <div class="info-label">Docker Image</div>
+                        <div class="info-value" style="font-family: monospace; word-break: break-all;">\${deploy.docker_image}</div>
+                    </div>
+                    \` : ''}
                 \`;
                 document.getElementById('deployment').innerHTML = deployHtml;
             } catch (error) {
