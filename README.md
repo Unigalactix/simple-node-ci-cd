@@ -9,6 +9,13 @@ This project demonstrates a deployment-ready Node.js application with a comprehe
   * Last commit information (hash, message, timestamp)
   * Deployment status and environment details
   * Auto-refreshing every 30 seconds
+* **Health Monitoring & Recovery** - Automated container health checks:
+  * `/health` endpoint for real-time service status monitoring
+  * Docker HEALTHCHECK for container orchestration
+  * Automated recovery mechanism in CI/CD pipeline (3 retry attempts)
+  * Severity 2 alerting on recovery failures
+  * Health check validation before deployment
+  * Recovery automation tagged monitors for tracking
 * **RESTful API Endpoints** for programmatic access to deployment data
 * Express.js web server with robust error handling
 * Comprehensive logging middleware
@@ -47,11 +54,33 @@ Visit `http://localhost:3000` to see the deployment dashboard.
 The application provides the following REST API endpoints:
 
 * `GET /` - Deployment Dashboard UI
+* `GET /health` - Health check endpoint for monitoring and container orchestration
 * `GET /api/dependencies` - Returns current dependency versions
 * `GET /api/last-commit` - Returns last commit information
 * `GET /api/deployment-status` - Returns deployment status and metadata
 
 ### Example API Responses
+
+**GET /health**
+```json
+{
+  "status": "healthy",
+  "timestamp": "2025-12-30T00:00:19.451Z",
+  "uptime": 14.872847876,
+  "service": "simple-node-ci-cd",
+  "version": "2.0.0",
+  "memory": {
+    "usage": {
+      "rss": 53858304,
+      "heapTotal": 7839744,
+      "heapUsed": 6229736,
+      "external": 2039899,
+      "arrayBuffers": 16619
+    },
+    "free": 21
+  }
+}
+```
 
 **GET /api/dependencies**
 ```json
@@ -121,9 +150,38 @@ The pipeline is configured in `.github/workflows/ci-cd.yml`. It automatically:
 * Performs code linting
 * Generates deployment metadata (timestamp, status, build info)
 * Builds Docker image
+* **Tests Docker health check locally before deployment**
 * Pushes to Azure Container Registry (ACR)
 * Deploys to Azure App Service
+* **Performs health check validation with automated recovery**
 * Tracks deployment status (success/failure)
+
+### Health Monitoring & Recovery (NJS-3)
+
+The CI/CD pipeline includes automated health monitoring and recovery:
+
+#### Local Health Check (Pre-Deployment)
+* Validates `/health` endpoint responds correctly before pushing to registry
+* Ensures Docker HEALTHCHECK configuration works
+* Fails fast if health endpoint is unavailable
+
+#### Production Health Check (Post-Deployment)
+* Waits 30 seconds for deployment stabilization
+* Attempts health check with 3 retry attempts
+* 40-second intervals between retries
+* Validates response status and structure
+
+#### Automated Recovery
+* Automatically retries failed health checks
+* Logs all recovery attempts for debugging
+* Uploads recovery logs as artifacts
+
+#### Severity 2 Alerting
+* Creates GitHub issue on recovery failure
+* Tags: `recovery_automation`, `sev-2`, `health-check-failure`, `njs-3`
+* Includes detailed incident information
+* Links to workflow run for debugging
+* Prevents duplicate alerts
 
 ### Automated Deployment Tracking
 
