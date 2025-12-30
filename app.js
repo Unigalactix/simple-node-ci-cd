@@ -62,6 +62,32 @@ function getDeploymentStatus() {
   }
 }
 
+// Health Check Endpoint
+app.get('/health', (req, res) => {
+  try {
+    const memUsage = process.memoryUsage();
+    const healthStatus = {
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      service: 'simple-node-ci-cd',
+      version: require('./package.json').version,
+      memory: {
+        usage: memUsage,
+        free: Math.round((1 - (memUsage.heapUsed / memUsage.heapTotal)) * 100)
+      }
+    };
+    res.status(200).json(healthStatus);
+  } catch (error) {
+    console.error('Error in /health:', error);
+    res.status(503).json({ 
+      status: 'unhealthy',
+      timestamp: new Date().toISOString(),
+      error: error.message 
+    });
+  }
+});
+
 // API Endpoints
 app.get('/api/dependencies', (req, res) => {
   try {

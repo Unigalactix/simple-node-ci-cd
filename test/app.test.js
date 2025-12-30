@@ -13,6 +13,44 @@ describe('GET /', () => {
 });
 
 describe('API Endpoints', () => {
+  describe('GET /health', () => {
+    it('returns health check information', async () => {
+      const res = await request(app).get('/health');
+      expect(res.statusCode).toEqual(200);
+      expect(res.body).toHaveProperty('status');
+      expect(res.body).toHaveProperty('timestamp');
+      expect(res.body).toHaveProperty('uptime');
+      expect(res.body).toHaveProperty('service');
+      expect(res.body).toHaveProperty('version');
+      expect(res.body).toHaveProperty('memory');
+    });
+
+    it('returns healthy status', async () => {
+      const res = await request(app).get('/health');
+      expect(res.statusCode).toEqual(200);
+      expect(res.body.status).toBe('healthy');
+      expect(res.body.service).toBe('simple-node-ci-cd');
+      expect(typeof res.body.uptime).toBe('number');
+      expect(res.body.uptime).toBeGreaterThan(0);
+    });
+
+    it('returns valid memory information', async () => {
+      const res = await request(app).get('/health');
+      expect(res.statusCode).toEqual(200);
+      expect(res.body.memory).toHaveProperty('usage');
+      expect(res.body.memory).toHaveProperty('free');
+      expect(typeof res.body.memory.free).toBe('number');
+    });
+
+    it('returns valid timestamp', async () => {
+      const res = await request(app).get('/health');
+      expect(res.statusCode).toEqual(200);
+      const timestamp = new Date(res.body.timestamp);
+      expect(timestamp).toBeInstanceOf(Date);
+      expect(timestamp.getTime()).not.toBeNaN();
+    });
+  });
+
   describe('GET /api/dependencies', () => {
     it('returns dependency information', async () => {
       const res = await request(app).get('/api/dependencies');
