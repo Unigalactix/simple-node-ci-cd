@@ -65,6 +65,7 @@ function getDeploymentStatus() {
 // Health Check Endpoint
 app.get('/health', (req, res) => {
   try {
+    const memUsage = process.memoryUsage();
     const healthStatus = {
       status: 'healthy',
       timestamp: new Date().toISOString(),
@@ -72,8 +73,8 @@ app.get('/health', (req, res) => {
       service: 'simple-node-ci-cd',
       version: require('./package.json').version,
       memory: {
-        usage: process.memoryUsage(),
-        free: Math.round((1 - (process.memoryUsage().heapUsed / process.memoryUsage().heapTotal)) * 100)
+        usage: memUsage,
+        free: Math.round((1 - (memUsage.heapUsed / memUsage.heapTotal)) * 100)
       }
     };
     res.status(200).json(healthStatus);
