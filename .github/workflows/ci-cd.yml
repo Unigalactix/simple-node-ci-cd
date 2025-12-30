@@ -198,10 +198,10 @@ jobs:
         if: steps.azure_check.outputs.enabled == 'true'
         uses: azure/webapps-deploy@v2
         with:
-          app-name: 'simple-node-ci-cd'
+          app-name: '${{ secrets.AZURE_WEBAPP_APP_NAME }}'
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: .
-          slot-name: production
+          slot-name: ${{ secrets.AZURE_WEBAPP_SLOT_NAME }}
 
   # JOB 5: HEALTH CHECK & RECOVERY AUTOMATION
   # NJS-3: Docker Container Recovery and Health Monitoring

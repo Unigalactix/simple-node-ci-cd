@@ -197,11 +197,12 @@ The CI/CD pipeline automatically generates a `deployment-status.json` file conta
 
 Set these in your GitHub repository settings under `Settings > Secrets and variables > Actions`:
 
-* `AZURE_REGISTRY_NAME` - Your Azure Container Registry name (without .azurecr.io)
-* `AZURE_REGISTRY_USERNAME` - Your Azure Container Registry username
-* `AZURE_REGISTRY_PASSWORD` - Your Azure Container Registry password
-* `AZURE_APP_NAME` - Your Azure App Service name
+* `ACR_LOGIN_SERVER` - Your Azure Container Registry login server (e.g., yourregistry.azurecr.io)
+* `ACR_USERNAME` - Your Azure Container Registry username
+* `ACR_PASSWORD` - Your Azure Container Registry password
+* `AZURE_WEBAPP_APP_NAME` - Your Azure App Service name
 * `AZURE_WEBAPP_PUBLISH_PROFILE` - Your Azure App Service publish profile
+* `AZURE_WEBAPP_SLOT_NAME` - Your Azure App Service deployment slot name (e.g., production)
 
 ## 📁 Project Structure
 
